@@ -1,4 +1,4 @@
-# Pursuit Teacher and Student Analysis Assistant
+# Teacher and Student Analysis Assistant
 
 This is a comprehensive web application designed for educational environments. It serves as a proactive tool for instructors and staff to monitor student well-being, track academic understanding, and receive AI-powered coaching assistance. The application features a student-facing check-in page and a secure, multi-faceted analysis dashboard for staff.
 
