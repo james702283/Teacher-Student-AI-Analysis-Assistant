@@ -11,6 +11,9 @@ import calendar
 import base64
 import requests
 import re
+import smtplib
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from flask import Flask, render_template_string, jsonify, request, session, redirect, url_for, send_file, send_from_directory, Response
 from datetime import datetime, timedelta
 from collections import defaultdict
@@ -34,14 +37,16 @@ STATUS_FILE = 'status.json'
 USERS_FILE = 'users.json'
 ALERTS_FILE = 'alerts.json'
 CALENDAR_UPLOADS_FILE = 'calendar_uploads.json'
+SENT_NOTIFICATIONS_FILE = 'sent_notifications.json'
 ACCEPTED_FILE_TYPES = 'image/*,.pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.pages,.key,.numbers,.odt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
 
 # --- Data Persistence & Setup ---
 def setup_app():
     if not os.path.exists(UPLOAD_FOLDER):
         os.makedirs(UPLOAD_FOLDER)
-    if not os.path.exists(CALENDAR_UPLOADS_FILE):
-        save_data(CALENDAR_UPLOADS_FILE, {})
+    for file, default in [(CALENDAR_UPLOADS_FILE, {}), (ALERTS_FILE, []), (SENT_NOTIFICATIONS_FILE, {})]:
+        if not os.path.exists(file):
+            save_data(file, default)
 
 def load_data(file_path, default_data):
     if not os.path.exists(file_path): return default_data
@@ -137,6 +142,7 @@ BASE_STYLE = """
             border: 1px solid #4d5761;
         }
         #ai-coach-fab-container:hover #ai-coach-fab-label { opacity: 1; }
+        .resolve-form { display: none; }
     </style>
 """
 
@@ -273,10 +279,12 @@ ADMIN_TEMPLATE = """
         .day-stats .morale { color: #facc15; } .day-stats .understanding { color: #34d399; }
         details > summary { cursor: pointer; list-style: none; } details > summary::-webkit-details-marker { display: none; }
         .alert-item { border-left: 4px solid #f59e0b; background-color: rgba(245, 158, 11, 0.1); }
+        .alert-item-resolved { border-left: 4px solid #34d399; background-color: rgba(52, 211, 153, 0.1); }
         .alert-item-morale { border-left-color: #EF4444; background-color: rgba(239, 68, 68, 0.1); }
         .details-text { color: #d1d5db; }
         .details-text .font-bold { color: #ffffff; }
         .details-text .text-xs { color: #8b949e; }
+        .alert-sub-tab.active { border-bottom-color: #3e6099; color: #f0f6fc; }
     </style>
 </head>
 <body class="dark-theme-text">
@@ -289,7 +297,7 @@ ADMIN_TEMPLATE = """
                 </div>
                 <ul class="space-y-2">
                     <li><a href="#" id="tab-link-summary" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'summary')"><span class="mr-3">📊</span>Today's Summary</a></li>
-                    <li><a href="#" id="tab-link-alerts" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'alerts')"><span class="mr-3">⚠️</span>Inbox & Alerts <span class="ml-auto bg-yellow-500 text-black text-xs font-bold rounded-full px-2 py-1">{{ alerts|length }}</span></a></li>
+                    <li><a href="#" id="tab-link-alerts" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'alerts')"><span class="mr-3">⚠️</span>Inbox & Alerts <span class="ml-auto bg-yellow-500 text-black text-xs font-bold rounded-full px-2 py-1">{{ open_alerts_count }}</span></a></li>
                     <li><a href="#" id="tab-link-planner" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'planner')"><span class="mr-3">📝</span>AI Lesson Planner</a></li>
                     <li><a href="#" id="tab-link-calendar" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'calendar')"><span class="mr-3">📅</span>Calendar Log</a></li>
                     <li><a href="#" id="tab-link-students" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'students')"><span class="mr-3">👥</span>Student Analysis</a></li>
@@ -339,21 +347,77 @@ ADMIN_TEMPLATE = """
             </div>
             <div id="alerts" class="tab-content">
                  <div class="card p-6">
-                    <h2 class="text-2xl font-bold text-white mb-4">Student Alerts & Inbox</h2>
-                    {% for alert in alerts %}
-                        <div class="p-4 rounded-lg mb-4 {{ 'alert-item-morale' if alert.type == 'morale' else 'alert-item' }}">
-                            <div class="flex justify-between items-start">
-                                <div>
-                                    <p class="font-bold text-lg">{{ alert.title }}</p>
-                                    <p class="text-gray-300">{{ alert.message }}</p>
-                                    <p class="text-xs text-gray-500 mt-2">Generated: {{ alert.date }}</p>
-                                </div>
-                                <form action="/delete_alert" method="post" class="ml-4"><input type="hidden" name="alert_id" value="{{ alert.id }}"><button type="submit" class="text-gray-400 hover:text-white">&times;</button></form>
+                    <div class="flex justify-between items-center mb-4">
+                        <h2 class="text-2xl font-bold text-white">Student Alert Inbox</h2>
+                         <div class="dropdown">
+                            <button class="modern-btn font-bold py-2 px-4 rounded-lg text-lg">Export Alerts</button>
+                            <div class="dropdown-content">
+                                <a href="{{ url_for('export_alerts', format_type='xlsx') }}">as Excel (.xlsx)</a>
+                                <a href="{{ url_for('export_alerts', format_type='csv') }}">as CSV (.csv)</a>
+                                <a href="{{ url_for('export_alerts', format_type='ods') }}">as OpenDocument (.ods)</a>
                             </div>
                         </div>
-                    {% else %}
-                        <p>No new alerts at this time. Great job, team!</p>
-                    {% endfor %}
+                    </div>
+                    <div class="flex border-b border-gray-700 mb-4">
+                        <button class="alert-sub-tab py-2 px-4 text-gray-400 border-b-2 border-transparent" onclick="openAlertsSubTab(event, 'open-alerts')">Open</button>
+                        <button class="alert-sub-tab py-2 px-4 text-gray-400 border-b-2 border-transparent" onclick="openAlertsSubTab(event, 'resolved-alerts')">Resolved</button>
+                    </div>
+
+                    <div id="open-alerts" class="alert-sub-tab-content">
+                        {% for alert in open_alerts %}
+                            <div class="p-4 rounded-lg mb-4 {{ 'alert-item-morale' if alert.type == 'morale' else 'alert-item' }}">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-bold text-lg">{{ alert.title }}</p>
+                                        <p class="text-gray-300">{{ alert.message }}</p>
+                                        <p class="text-xs text-gray-500 mt-2">Generated: {{ alert.date }}</p>
+                                    </div>
+                                    <button class="modern-btn text-xs py-1 px-2 rounded" onclick="toggleResolveForm('{{ alert.id }}')">Resolve</button>
+                                </div>
+                                <div id="resolve-form-{{ alert.id }}" class="resolve-form mt-4 pt-4 border-t border-gray-600">
+                                    <form action="{{ url_for('resolve_alert') }}" method="post">
+                                        <input type="hidden" name="alert_id" value="{{ alert.id }}">
+                                        <div class="mb-2">
+                                            <label for="resolved_by-{{ alert.id }}" class="block text-sm font-medium">Resolved By:</label>
+                                            <select id="resolved_by-{{ alert.id }}" name="resolved_by" class="dark-select mt-1">
+                                                {% for user in all_users %}<option value="{{ user.email }}">{{ user.email }}</option>{% endfor %}
+                                            </select>
+                                        </div>
+                                        <div class="mb-4">
+                                            <label for="resolution_comments-{{ alert.id }}" class="block text-sm font-medium">Comments:</label>
+                                            <textarea id="resolution_comments-{{ alert.id }}" name="resolution_comments" rows="3" class="dark-textarea mt-1" required></textarea>
+                                        </div>
+                                        <button type="submit" class="accent-btn font-bold w-full py-2 px-4 rounded-lg">Mark as Resolved</button>
+                                    </form>
+                                </div>
+                            </div>
+                        {% else %}
+                            <p>No open alerts at this time. Great job, team!</p>
+                        {% endfor %}
+                    </div>
+
+                    <div id="resolved-alerts" class="alert-sub-tab-content" style="display: none;">
+                        {% for alert in resolved_alerts %}
+                            <details class="alert-item-resolved p-4 rounded-lg mb-4">
+                                <summary class="flex justify-between items-start cursor-pointer">
+                                    <div>
+                                        <p class="font-bold text-lg">{{ alert.title }}</p>
+                                        <p class="text-gray-300">{{ alert.message }}</p>
+                                        <p class="text-xs text-gray-500 mt-2">Originally Generated: {{ alert.date }}</p>
+                                    </div>
+                                    <span class="text-gray-400">&#9662;</span>
+                                </summary>
+                                <div class="mt-4 pt-4 border-t border-gray-600">
+                                    <p><strong>Resolved By:</strong> {{ alert.resolved_by }}</p>
+                                    <p><strong>Resolved On:</strong> {{ alert.resolved_on }}</p>
+                                    <p><strong>Comments:</strong></p>
+                                    <p class="whitespace-pre-wrap pl-4">{{ alert.resolution_comments }}</p>
+                                </div>
+                            </details>
+                        {% else %}
+                            <p>No alerts have been resolved yet.</p>
+                        {% endfor %}
+                    </div>
                 </div>
             </div>
             <div id="calendar" class="tab-content">
@@ -542,13 +606,33 @@ ADMIN_TEMPLATE = """
                 if (link) { link.classList.add('active'); }
             }
         }
+        
+        function openAlertsSubTab(evt, subTabName) {
+            document.querySelectorAll('.alert-sub-tab-content').forEach(tc => tc.style.display = 'none');
+            document.querySelectorAll('.alert-sub-tab').forEach(st => st.classList.remove('active'));
+            document.getElementById(subTabName).style.display = 'block';
+            evt.currentTarget.classList.add('active');
+        }
+        
+        function toggleResolveForm(alertId) {
+            const form = document.getElementById(`resolve-form-${alertId}`);
+            if (form) {
+                form.style.display = form.style.display === 'none' ? 'block' : 'none';
+            }
+        }
 
         document.addEventListener('DOMContentLoaded', () => {
             const params = new URLSearchParams(window.location.search);
             const tab = params.get('tab') || 'summary';
             openTab(null, tab);
+
+            const alertTab = document.querySelector('.alert-sub-tab');
+            if (alertTab) {
+                alertTab.click();
+            }
         });
 
+        // Other scripts remain the same...
         const coachFabContainer = document.getElementById('ai-coach-fab-container');
         const coachModal = document.getElementById('ai-coach-modal-container');
         const chatPlaceholder = document.getElementById('chat-placeholder');
@@ -629,14 +713,11 @@ ADMIN_TEMPLATE = """
 
         function htmlToText(html) {
             let temp = document.createElement('div');
-            // Replace <br> tags with a unique placeholder before stripping HTML
             temp.innerHTML = html.replace(/<br\s*\\/?>/gi, '___NEWLINE___');
-            // Replace block elements with the placeholder as well for better spacing
             temp.querySelectorAll('p, h1, h2, h3, h4, h5, h6, li, div').forEach(el => {
                 el.insertAdjacentText('afterend', '___NEWLINE___');
             });
             let text = temp.textContent || temp.innerText || '';
-            // Replace the placeholder with an actual newline character
             return text.replace(/___NEWLINE___/g, '\\n').trim();
         }
 
@@ -764,7 +845,6 @@ ADMIN_TEMPLATE = """
             }
             chatHistory.scrollTop = chatHistory.scrollHeight;
         }
-
     </script>
 </body></html>
 """
@@ -873,8 +953,8 @@ def export_plan():
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
+        # We need to decode the cleaned text for FPDF
         cleaned_text = clean_html_for_export(html_content, 'txt')
-        # FPDF uses latin-1 encoding, so we need to encode our string appropriately.
         cleaned_text_encoded = cleaned_text.encode('latin-1', 'replace').decode('latin-1')
         pdf.multi_cell(0, 10, txt=cleaned_text_encoded)
         pdf_output = pdf.output(dest='S').encode('latin-1')
@@ -950,7 +1030,10 @@ def admin_view(year, month):
     daily_data, student_data, calendar_data, todays_summary_data = process_checkin_data(valid_checkins, year, month)
     
     current_user = find_user_by_email(session['user_email'])
-    alerts = load_data(ALERTS_FILE, [])
+    all_alerts = load_data(ALERTS_FILE, [])
+    open_alerts = [a for a in all_alerts if a['status'] == 'open']
+    resolved_alerts = [a for a in all_alerts if a['status'] == 'resolved']
+    
     all_users = load_data(USERS_FILE, [])
     student_names = sorted(list(student_data.keys()))
 
@@ -968,7 +1051,9 @@ def admin_view(year, month):
         prev_month_url=prev_month_url,
         next_month_url=next_month_url,
         current_user=current_user,
-        alerts=alerts,
+        open_alerts=open_alerts,
+        resolved_alerts=resolved_alerts,
+        open_alerts_count=len(open_alerts),
         all_users=all_users,
         student_names=student_names,
         accepted_file_types=ACCEPTED_FILE_TYPES,
@@ -1200,7 +1285,7 @@ def handle_checkin():
     new_entry = { 'name': data['name'].strip().title(), 'morale': data['morale'], 'understanding': data['understanding'], 'timestamp': datetime.now().isoformat() }
     all_checkins.append(new_entry)
     save_data(DATA_FILE, all_checkins)
-    check_for_alerts()
+    check_for_alerts(new_entry)
     return jsonify({'success': True})
 
 @app.route('/api/today')
@@ -1243,9 +1328,188 @@ def remove_staff():
     save_data(USERS_FILE, updated_users)
     return redirect(url_for('admin', tab='staff'))
 
-def check_for_alerts():
-    # ... placeholder for alert logic ...
-    pass
+# --- Alerting and Email Logic ---
+
+def send_alert_email(subject, html_body):
+    """Sends an email to all registered instructors and admins."""
+    host = os.getenv('EMAIL_HOST')
+    port = os.getenv('EMAIL_PORT')
+    user = os.getenv('EMAIL_USER')
+    password = os.getenv('EMAIL_PASSWORD')
+
+    if not all([host, port, user, password]):
+        print("Email configuration is missing in .env file. Skipping email notification.")
+        return
+
+    all_users = load_data(USERS_FILE, [])
+    recipients = [u['email'] for u in all_users]
+    if not recipients:
+        print("No users found to send email to.")
+        return
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = subject
+    msg['From'] = user
+    msg['To'] = ", ".join(recipients)
+
+    part_html = MIMEText(html_body, 'html')
+    msg.attach(part_html)
+
+    try:
+        with smtplib.SMTP(host, int(port)) as server:
+            server.starttls()
+            server.login(user, password)
+            server.sendmail(user, recipients, msg.as_string())
+        print(f"Successfully sent email alert to {len(recipients)} user(s).")
+    except Exception as e:
+        print(f"Failed to send email: {e}")
+
+
+def check_for_alerts(latest_checkin):
+    """Analyzes student data to generate alerts and send emails based on defined rules."""
+    student_name = latest_checkin['name']
+    all_checkins = load_data(DATA_FILE, [])
+    student_history = sorted(
+        [c for c in all_checkins if c.get('name') == student_name],
+        key=lambda x: x['timestamp'],
+        reverse=True
+    )
+
+    if len(student_history) < 3:
+        return # Not enough data to check for patterns
+
+    alerts = load_data(ALERTS_FILE, [])
+    sent_notifications = load_data(SENT_NOTIFICATIONS_FILE, {})
+    today_str = datetime.now().strftime('%Y-%m-%d')
+    
+    # --- Rule 1: 3 Consecutive Days with score <= 5 ---
+    last_3_days = student_history[:3]
+    if len(last_3_days) == 3:
+        # Check Morale
+        if all(c['morale'] <= 5 for c in last_3_days):
+            alert_id = f"{student_name}-morale-3-consecutive-{today_str}"
+            if not sent_notifications.get(alert_id):
+                title = f"Consecutive Low Morale Alert for {student_name}"
+                message = f"{student_name} has reported a morale score of 5 or below for 3 consecutive days."
+                alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'morale', 'status': 'open'})
+                
+                email_subject = f"Student Morale Alert: {student_name}"
+                email_body = f"""
+                <html><body>
+                <p>Hi Team,</p>
+                <p>This is an automated alert regarding student morale. <b>{student_name}</b> has reported a morale score of 5 or below for the last three consecutive check-ins.</p>
+                <p>Please make time to check in with them personally to see if there is anything we can do to help.</p>
+                <p>After you've spoken with them, you can use the AI Teaching Assistant on the dashboard to brainstorm ways to improve their morale based on your conversation.</p>
+                <p>Thank you,</p>
+                <p>The Teacher & Student AI Analysis Tool</p>
+                </body></html>
+                """
+                send_alert_email(email_subject, email_body)
+                sent_notifications[alert_id] = today_str
+
+        # Check Understanding
+        if all(c['understanding'] <= 5 for c in last_3_days):
+            alert_id = f"{student_name}-understanding-3-consecutive-{today_str}"
+            if not sent_notifications.get(alert_id):
+                title = f"Consecutive Low Understanding Alert for {student_name}"
+                days_str = ", ".join([datetime.fromisoformat(c['timestamp']).strftime('%b %d') for c in last_3_days])
+                message = f"{student_name} has reported an understanding score of 5 or below on {days_str}."
+                alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'understanding', 'status': 'open'})
+                
+                email_subject = f"Student Understanding Alert: {student_name}"
+                email_body = f"""
+                <html><body>
+                <p>Hi Team,</p>
+                <p>This is an automated alert regarding student understanding. <b>{student_name}</b> has reported an understanding score of 5 or below on the following recent days: {days_str}.</p>
+                <p>This may indicate a foundational gap in their learning. To get a clearer picture and an actionable plan, you can use the <b>AI Lesson Planner</b> on the dashboard.</p>
+                <p>Try submitting images of their work, code files, or documents from those days along with the lesson context. The AI can provide a proper analysis and a guide to help them get caught up to speed.</p>
+                <p>Thank you,</p>
+                <p>The Teacher & Student AI Analysis Tool</p>
+                </body></html>
+                """
+                send_alert_email(email_subject, email_body)
+                sent_notifications[alert_id] = today_str
+
+    # --- Rule 2: 5-Day Average score <= 5 ---
+    last_5_days = student_history[:5]
+    if len(last_5_days) == 5:
+        # Check Morale Average
+        avg_morale = sum(c['morale'] for c in last_5_days) / 5
+        if avg_morale <= 5:
+            alert_id = f"{student_name}-morale-5-day-avg-{today_str}"
+            if not sent_notifications.get(alert_id):
+                title = f"Low 5-Day Morale Average for {student_name}"
+                message = f"{student_name}'s average morale over the last 5 days is {avg_morale:.1f}/10."
+                # Email logic for this case is similar to the consecutive one, so we can reuse or create a new one. For now, we'll just log the alert.
+                alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'morale', 'status': 'open'})
+                sent_notifications[alert_id] = today_str # Prevent re-sending
+
+        # Check Understanding Average
+        avg_understanding = sum(c['understanding'] for c in last_5_days) / 5
+        if avg_understanding <= 5:
+            alert_id = f"{student_name}-understanding-5-day-avg-{today_str}"
+            if not sent_notifications.get(alert_id):
+                title = f"Low 5-Day Understanding Average for {student_name}"
+                message = f"{student_name}'s average understanding over the last 5 days is {avg_understanding:.1f}/10."
+                alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'understanding', 'status': 'open'})
+                sent_notifications[alert_id] = today_str # Prevent re-sending
+    
+    save_data(ALERTS_FILE, alerts)
+    save_data(SENT_NOTIFICATIONS_FILE, sent_notifications)
+
+@app.route('/resolve_alert', methods=['POST'])
+def resolve_alert():
+    if not session.get('logged_in'): return redirect(url_for('login'))
+    
+    alert_id = request.form.get('alert_id')
+    resolved_by = request.form.get('resolved_by')
+    comments = request.form.get('resolution_comments')
+    
+    all_alerts = load_data(ALERTS_FILE, [])
+    for alert in all_alerts:
+        if alert['id'] == alert_id:
+            alert['status'] = 'resolved'
+            alert['resolved_by'] = resolved_by
+            alert['resolution_comments'] = comments
+            alert['resolved_on'] = datetime.now().strftime('%Y-%m-%d %H:%M')
+            break
+            
+    save_data(ALERTS_FILE, all_alerts)
+    return redirect(url_for('admin', tab='alerts'))
+
+@app.route('/export_alerts/<string:format_type>')
+def export_alerts(format_type):
+    if not session.get('logged_in'): return redirect(url_for('login'))
+    
+    all_alerts = load_data(ALERTS_FILE, [])
+    if not all_alerts:
+        return "No alerts to export.", 404
+
+    df = pd.DataFrame(all_alerts)
+    # Reorder and rename columns for clarity
+    df = df[['date', 'title', 'message', 'status', 'resolved_on', 'resolved_by', 'resolution_comments']]
+    df.columns = ['Date Generated', 'Title', 'Details', 'Status', 'Date Resolved', 'Resolved By', 'Resolution Comments']
+    
+    output = BytesIO()
+    filename = f"student_alerts_export.{format_type}"
+
+    if format_type == 'xlsx':
+        mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+        df.to_excel(output, index=False, sheet_name='Alerts')
+    elif format_type == 'csv':
+        mimetype = 'text/csv'
+        df.to_csv(output, index=False)
+    elif format_type == 'ods':
+        mimetype = 'application/vnd.oasis.opendocument.spreadsheet'
+        with pd.ExcelWriter(output, engine='odf') as writer:
+            df.to_excel(writer, index=False, sheet_name='Alerts')
+    else:
+        return "Invalid format type", 400
+        
+    output.seek(0)
+    
+    return send_file(output, as_attachment=True, download_name=filename, mimetype=mimetype)
+
 
 @app.route('/api/generate_plan', methods=['POST'])
 def generate_guidance_plan():
