@@ -1,14 +1,14 @@
 # Teacher and Student AI Analysis Tool
 
-> A pioneering platform designed to transform the educational landscape by fusing empathetic teaching with the power of artificial intelligence.
+> An evolutionary leap in educational technology, designed to redefine the student-teacher dynamic through the powerful synergy of human mentorship and artificial intelligence.
 
-## Our Vision: Augmenting the Art of Teaching
+## Our Vision: From Data to Dialogue
 
-In an era of rapid technological advancement, we asked a fundamental question: How can AI serve our most vital human-driven profession—education? The answer lies not in replacing the invaluable intuition of a teacher, but in **augmenting** it.
+This application was built on a single, powerful belief: that the future of education lies not in replacing the invaluable connection between teachers and students, but in augmenting and deepening it. We saw a gap between raw student data and the genuine, human insight required for effective teaching. This tool was designed to bridge that gap.
 
-This application was born from a visionary concept: to create a tool that moves beyond reactive problem-solving and ushers in an era of **proactive, data-informed, and empathetic student support**. It was meticulously designed to address two of the most critical, yet often invisible, pillars of student success: their mental well-being and their true comprehension of complex material.
+This is more than just software; it is a dedicated partner for the modern educator. It transforms the classroom paradigm from reactive problem-solving to **proactive, data-informed, and empathetic student support**. It provides the tools to understand not just *if* a student is struggling, but *why* they are struggling, and just as importantly, to recognize and appreciate not just proficiency, but true ambition.
 
-By creating a seamless and secure feedback loop between students, teachers, and cutting-edge AI, the Teacher and Student AI Analysis Tool provides insights and capabilities that have never been leveraged in this way. It is more than an application; it is a new partner in the classroom, designed to help change the face of education for the better.
+By creating a seamless and secure feedback loop between students, teachers, and a suite of cutting-edge AI co-pilots, this application provides capabilities that have never been leveraged in this way, ready to help change the face of education for the better.
 
 ---
 
@@ -17,9 +17,8 @@ By creating a seamless and secure feedback loop between students, teachers, and 
 | Empowering Student Voice | Holistic Instructor Dashboard |
 | :---: | :---: |
 | ![Student Check-in](assets/1-Student%20Check-in.png) | ![Main Dashboard](assets/2-Main%20Dashboard%20View.png) |
-| **Personalized AI Intervention** | **Data-Rich Daily Views** |
+| **The AI Strategy Hub** | **Data-Rich Daily Views & Attachments** |
 | ![AI Lesson Planner](assets/3-AI%20Lesson%20Planner.png) | ![Day Detail View](assets/4-Daily%20File%20Attachments.png) |
-
 
 ---
 
@@ -27,25 +26,32 @@ By creating a seamless and secure feedback loop between students, teachers, and 
 
 ### For Students: Fostering Psychological Safety & Voice 👨‍🎓
 
-* **Proactive Well-being Check-in:** A simple, elegant interface empowers students to privately communicate their daily morale and academic confidence, fostering a safe space for honest feedback.
-* **Instant, Empathetic Reinforcement:** Upon checking in, students receive a unique, algorithmically-selected supportive message from a library of over 200 curated responses, providing immediate positive reinforcement.
+* **Empowering Student Voice:** A clean, elegant interface allows students to privately and safely communicate their daily morale and academic confidence on a simple 1-10 scale.
+* **Instant, Empathetic Reinforcement:** Upon checking in, students receive a unique, algorithmically-selected supportive message from a library of over 200 curated responses, providing immediate positive reinforcement and encouraging continued honesty.
 
 ### For Instructors: The AI-Powered Co-Pilot 👩‍🏫
 
 * **Enterprise-Grade Security & User Management:** Features a robust, role-based authentication system (`super_admin`, `instructor`) and a dedicated portal for the Super Admin to manage staff access, ensuring data integrity and security.
 * **Proactive, AI-Driven Alerts & Intervention Workflow:**
-    * **Intelligent Trend Analysis:** The application's core logic constantly analyzes student data, automatically identifying negative trends like consecutive low scores or declining averages.
-    * **Automated Email Notifications:** When a concerning trend is detected, the system dispatches a detailed email alert to all relevant staff, ensuring no student slips through the cracks. Emails are context-aware, providing different guidance for morale vs. understanding issues.
-    * **Actionable Alert Inbox:** The dashboard features a full-featured inbox for open alerts. Staff can formally resolve an alert by documenting their intervention with comments, creating a complete audit trail of student support.
-    * **Comprehensive Record-Keeping:** The entire history of open and resolved alerts can be exported to multiple spreadsheet formats.
+    * **Intelligent Trend Analysis:** The application's core logic constantly analyzes student data, automatically identifying concerning trends like consecutive low scores or declining 5-day averages.
+    * **Context-Aware Email Notifications:** The system dispatches tailored email alerts to all relevant staff, providing specific, actionable advice based on the nature of the alert (morale vs. understanding).
+    * **Actionable Alert Inbox:** A full-featured inbox allows staff to manage, track, and formally resolve open alerts by documenting their intervention with comments, creating a complete audit trail of student support.
 * **Holistic, Data-Driven Insights:**
-    * **The 30,000-Foot View:** The dashboard provides beautiful, at-a-glance summaries of class-wide averages and participation for any given day.
-    * **The Granular View:** A fully interactive calendar allows instructors to drill down into any specific day in history to see detailed check-in data and attached lesson materials.
+    * **Multi-Format Data Export:** Export comprehensive datasets for all students, a specific month, or the entire alert history into **Excel (.xlsx)**, **CSV (.csv)**, or **OpenDocument (.ods)** files for maximum compatibility and offline analysis.
     * **The Individual View:** A per-student analysis tab provides a complete, chronological history of every student's journey, making it easy to spot long-term patterns.
-* **A Suite of Cutting-Edge AI Co-pilots (Powered by Gemini):**
-    * **🧠 The AI Lesson Planner:** This is the application's signature feature. An instructor can select a student, provide context on a lesson, and even upload photos or documents of the student's work. The AI performs a deep analysis and generates a concrete, pedagogical-sound guidance plan.
-    * **🚀 The Action-Ready Plan:** The generated plan isn't just text—it's a shareable asset. Instructors can instantly **Print** it for one-on-one meetings, **Export** it to `.txt`, `.md`, or `.pdf`, or **Share** it directly to any app on their device (email, messaging, etc.) via the native Web Share API.
-    * **💬 The AI Teaching Assistant:** A floating, multimodal chat assistant is always available. Instructors can use it for anything from brainstorming morale-boosting activities to getting a second opinion on a student's submitted work by uploading a file.
+    * **Interactive Calendar & Daily Attachments:** A full-calendar view provides a "heat map" of class progress and allows instructors to upload, download, and delete relevant files (e.g., lesson plans, handouts) for any specific day.
+
+### The AI Strategy Hub: A Revolutionary Teaching Assistant 🧠
+
+The true heart of the application, this tab moves beyond simple planning into a multi-purpose hub for AI-augmented teaching.
+
+* **Holistic, Multimodal Analysis:** Simultaneously process lesson context provided via text, an uploaded lesson plan file (e.g., a `.pdf` or `.docx`), *and* an uploaded student work file (e.g., a `.py` script or an image of their notes) to generate a deeply informed analysis.
+* **Code Proficiency and Ambition Gauge:** In tech-focused environments, this tool truly shines. Upload a student's code file to have the AI analyze it for:
+    * Correctness and functionality.
+    * Adherence to best practices and style.
+    * Moments of ambitious, "above-and-beyond" effort that demonstrate true mastery.
+* **General Pedagogical Co-pilot:** By selecting "Teacher" as the target, an instructor can ask any general educational or strategic question, transforming the tool into an on-demand consultant for brainstorming, differentiation strategies, and more.
+* **Action-Ready Output:** The AI's response isn't locked away. It can be instantly **Printed** for one-on-one meetings, **Exported** to `.txt`, `.md`, or `.pdf`, or **Shared** directly to any app on the user's device (email, messaging, etc.) via the native Web Share API.
 
 ---
 
@@ -71,18 +77,15 @@ By creating a seamless and secure feedback loop between students, teachers, and 
 
 ### Installation and Setup
 
-1.  **Clone or Download the Project:**
-    Save the `app.py` file to a new, empty folder on your computer.
+1.  **Clone or Download the Project:** Save all project files (`app.py`, `launch.bat`, `.gitignore`, etc.) into a new folder on your computer.
 
-2.  **Create an `uploads` and `assets` Folder:**
-    In the same directory as `app.py`, create two empty folders: `uploads` (for daily file attachments) and `assets` (for your screenshots).
+2.  **Create Project Folders:** In your main project directory, create two empty folders: `uploads` (for daily file attachments) and `assets` (for your `README.md` screenshots).
     ```bash
     mkdir uploads
     mkdir assets
     ```
 
-3.  **Create a `.env` File:**
-    In the same folder, create a `.env` file and add the following, filling in your specific credentials.
+3.  **Create a `.env` File:** In the root directory, create a `.env` file and add the following, filling in your specific credentials.
     ```
     # --- API Key ---
     GEMINI_API_KEY="YOUR_API_KEY_HERE"
@@ -95,39 +98,29 @@ By creating a seamless and secure feedback loop between students, teachers, and 
     ```
     > **Note:** For Gmail, you must generate a special **App Password**. [Follow Google's official instructions here.](https://support.google.com/accounts/answer/185833)
 
-4.  **Create a `.gitignore` File:**
-    Create a file named `.gitignore` in the same folder to protect your secrets and user-generated data.
-
-5.  **Create and Activate a Virtual Environment (Recommended):**
+4.  **Create and Activate a Virtual Environment (Recommended):**
     ```bash
-    # On macOS/Linux
-    python3 -m venv venv
-    source venv/bin/activate
-
     # On Windows
     python -m venv venv
     venv\Scripts\activate
     ```
 
-6.  **Install Dependencies:**
-    Run the following command to install all required libraries:
+5.  **Install Dependencies:** With your virtual environment active, run the following command:
     ```bash
     pip install Flask python-dotenv werkzeug pandas openpyxl odfpy fpdf2 requests
     ```
 
-7.  **Run for First-Time Setup:**
-    The very first time you run the script, it will prompt you in the terminal to create the Super Admin account.
+6.  **Run for First-Time Setup:** The very first time you run the script, it will prompt you in the terminal to create the Super Admin account.
     ```bash
     python app.py
     ```
     After successfully creating the admin user, the script will exit.
 
-8.  **Run for Normal Use:**
-    Run the script again to start the web server.
+7.  **Run for Normal Use:** Launch the application by running the script again, or by using the `launch.bat` file.
     ```bash
     python app.py
     ```
 
-9.  **Access the Application:**
+8.  **Access the Application:**
     * **Student View:** `http://127.0.0.1:5000/`
     * **Staff Login:** `http://127.0.0.1:5000/login`
