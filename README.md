@@ -12,7 +12,7 @@ This robust tool was built from the ground up to serve as a central hub for inst
 | :---: | :---: |
 | ![Student Check-in](assets/1-Student%20Check-in.png) | ![Main Dashboard](assets/2-Main%20Dashboard%20View.png) |
 | **AI Lesson Planner & Sharing** | **Daily File Attachments** |
-| ![AI Lesson Planner](assets/3-AI%20Lesson%20Planner.jpg) | ![Day Detail View](assets/4-Daily%20File%20Attachments.png) |
+| ![AI Lesson Planner](assets/3-AI%20Lesson%20Planner.png) | ![Day Detail View](assets/4-Daily%20File%20Attachments.png) |
 
 
 ---
