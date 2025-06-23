@@ -38,7 +38,8 @@ USERS_FILE = 'users.json'
 ALERTS_FILE = 'alerts.json'
 CALENDAR_UPLOADS_FILE = 'calendar_uploads.json'
 SENT_NOTIFICATIONS_FILE = 'sent_notifications.json'
-ACCEPTED_FILE_TYPES = 'image/*,.pdf,.txt,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.pages,.key,.numbers,.odt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+# EXPANDED to include a wide array of code and text file types
+ACCEPTED_FILE_TYPES = 'image/*,.pdf,.txt,.md,.py,.js,.html,.css,.java,.c,.cpp,.cs,.rb,.php,.swift,.go,.rs,.kt,.sql,.xml,.json,.yaml,.yml,.sh,.bat,.ps1,.doc,.docx,.ppt,.pptx,.xls,.xlsx,.pages,.key,.numbers,.odt,application/pdf,application/msword,application/vnd.openxmlformats-officedocument.wordprocessingml.document,text/*'
 
 # --- Data Persistence & Setup ---
 def setup_app():
@@ -298,7 +299,7 @@ ADMIN_TEMPLATE = """
                 <ul class="space-y-2">
                     <li><a href="#" id="tab-link-summary" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'summary')"><span class="mr-3">📊</span>Today's Summary</a></li>
                     <li><a href="#" id="tab-link-alerts" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'alerts')"><span class="mr-3">⚠️</span>Inbox & Alerts <span class="ml-auto bg-yellow-500 text-black text-xs font-bold rounded-full px-2 py-1">{{ open_alerts_count }}</span></a></li>
-                    <li><a href="#" id="tab-link-planner" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'planner')"><span class="mr-3">📝</span>AI Lesson Planner</a></li>
+                    <li><a href="#" id="tab-link-planner" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'planner')"><span class="mr-3">📝</span>AI Strategy Hub</a></li>
                     <li><a href="#" id="tab-link-calendar" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'calendar')"><span class="mr-3">📅</span>Calendar Log</a></li>
                     <li><a href="#" id="tab-link-students" class="sidebar-link flex items-center p-3 rounded-lg" onclick="openTab(event, 'students')"><span class="mr-3">👥</span>Student Analysis</a></li>
                     {% if current_user.role == 'super_admin' %}
@@ -524,25 +525,37 @@ ADMIN_TEMPLATE = """
             {% endif %}
             <div id="planner" class="tab-content">
                 <div class="card p-6">
-                    <h2 class="text-2xl font-bold text-white mb-4">AI Lesson Planner</h2>
+                    <h2 class="text-2xl font-bold text-white mb-4">AI Strategy Hub</h2>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         <div>
-                            <h3 class="text-xl font-semibold mb-4">Generate Guidance Plan</h3>
+                            <h3 class="text-xl font-semibold mb-4">Generate Guidance Plan or Get Assistance</h3>
                             <div class="space-y-4">
-                                <div><label for="planner-student-input">Select or Enter Student Name:</label>
-                                    <input list="student-names" id="planner-student-input" class="dark-input mt-1" placeholder="Select or type a name...">
-                                    <datalist id="student-names">
-                                        {% if student_names %}{% for name in student_names %}<option value="{{ name }}"></option>{% endfor %}{% endif %}
-                                    </datalist>
+                                <div>
+                                    <label for="planner-student-input" class="block mb-1">Select Target or Topic:</label>
+                                    <select id="planner-student-input" class="dark-select">
+                                        <option value="Teacher">Teacher (General Question)</option>
+                                        <option disabled>--- Students ---</option>
+                                        {% if student_names %}{% for name in student_names %}<option value="{{ name }}">{{ name }}</option>{% endfor %}{% endif %}
+                                    </select>
                                 </div>
-                                <div><label for="planner-lesson-context">Provide Lesson Context:</label><textarea id="planner-lesson-context" rows="6" class="dark-textarea mt-1" placeholder="E.g., Yesterday's lesson was on Python dictionaries..."></textarea></div>
-                                <div><label for="planner-file-upload">Upload Student Work (Optional):</label><input type="file" id="planner-file-upload" accept="{{ accepted_file_types }}" class="dark-input mt-1"></div>
-                                <button id="generate-plan-btn" class="accent-btn font-bold w-full py-2 px-4 rounded-lg">Generate Guidance Plan</button>
+                                <div>
+                                    <label for="planner-lesson-context" class="block mb-1">Provide Context or Ask a Question:</label>
+                                    <textarea id="planner-lesson-context" rows="4" class="dark-textarea" placeholder="For a student, describe the lesson. For a general question, ask anything."></textarea>
+                                </div>
+                                <div>
+                                    <label for="lesson-file-upload" class="block mb-1">Attach Lesson File (Optional):</label>
+                                    <input type="file" id="lesson-file-upload" accept="{{ accepted_file_types }}" class="dark-input">
+                                </div>
+                                <div>
+                                    <label for="student-work-file-upload" class="block mb-1">Attach Student Work File (Optional):</label>
+                                    <input type="file" id="student-work-file-upload" accept="{{ accepted_file_types }}" class="dark-input">
+                                </div>
+                                <button id="generate-plan-btn" class="accent-btn font-bold w-full py-2 px-4 rounded-lg">Generate AI Response</button>
                             </div>
                         </div>
                         <div>
-                            <h3 class="text-xl font-semibold mb-4">Generated Plan of Action</h3>
-                            <div id="ai-plan-output" class="p-4 rounded-lg h-96 overflow-y-auto whitespace-pre-wrap" style="background-color: #0d1117;"><p class="text-gray-400">Your plan will appear here...</p></div>
+                            <h3 class="text-xl font-semibold mb-4">Generated Response</h3>
+                            <div id="ai-plan-output" class="p-4 rounded-lg h-96 overflow-y-auto whitespace-pre-wrap" style="background-color: #0d1117;"><p class="text-gray-400">Your AI-generated analysis or response will appear here...</p></div>
                             <div id="plan-actions" class="flex items-center gap-2 mt-4" style="display: none;">
                                 <button id="print-plan-btn" class="modern-btn font-bold py-2 px-4 rounded-lg text-sm">Print</button>
                                 <div class="dropdown">
@@ -649,43 +662,76 @@ ADMIN_TEMPLATE = """
                  if(e.target === coachModal) { closeAiCoach(); }
             });
         }
-
+        
         const generateBtn = document.getElementById('generate-plan-btn');
         const planActions = document.getElementById('plan-actions');
+        
+        // Helper to get a file's data, intelligently overriding MIME type for code files
+        const getFileData = async (fileInput) => {
+            if (!fileInput || fileInput.files.length === 0) {
+                return { fileData: null, mimeType: null };
+            }
+            const file = fileInput.files[0];
+            const fileData = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.readAsDataURL(file);
+                reader.onload = () => resolve(reader.result.split(',')[1]);
+                reader.onerror = error => reject(error);
+            });
+
+            let mimeType = file.type;
+            const textExtensions = ['py', 'js', 'html', 'css', 'java', 'c', 'cpp', 'cs', 'rb', 'php', 'swift', 'go', 'rs', 'kt', 'sql', 'xml', 'json', 'yaml', 'yml', 'sh', 'bat', 'ps1', 'md', 'txt'];
+            const extension = file.name.split('.').pop().toLowerCase();
+
+            if (!mimeType || textExtensions.includes(extension)) {
+                mimeType = 'text/plain';
+            }
+            
+            return { fileData, mimeType };
+        };
+
+
         if(generateBtn) {
              generateBtn.addEventListener('click', async () => {
                 const studentName = document.getElementById('planner-student-input').value;
-                if (!studentName) { alert('Please select or enter a student name.'); return; }
                 const lessonContext = document.getElementById('planner-lesson-context').value;
-                const fileInput = document.getElementById('planner-file-upload');
+                const lessonFileInput = document.getElementById('lesson-file-upload');
+                const studentWorkFileInput = document.getElementById('student-work-file-upload');
+                
+                if (!studentName) { alert('Please select a student or "Teacher".'); return; }
+                if (!lessonContext && lessonFileInput.files.length === 0 && studentWorkFileInput.files.length === 0) { 
+                    alert('Please provide some context, ask a question, or upload a file.'); 
+                    return; 
+                }
+                
                 const outputDiv = document.getElementById('ai-plan-output');
-                outputDiv.innerHTML = '<p class="text-yellow-400">Generating plan... Please wait.</p>';
+                outputDiv.innerHTML = '<p class="text-yellow-400">Generating response... Please wait.</p>';
                 planActions.style.display = 'none';
 
-                let fileData = null;
-                let mimeType = null;
-                if (fileInput.files.length > 0) {
-                    const file = fileInput.files[0];
-                    mimeType = file.type;
-                    const reader = new FileReader();
-                    fileData = await new Promise((resolve) => {
-                        reader.onload = (e) => resolve(e.target.result.split(',')[1]);
-                        reader.readAsDataURL(file);
-                    });
-                }
+                const lessonFileData = await getFileData(lessonFileInput);
+                const studentWorkFileData = await getFileData(studentWorkFileInput);
+
+                let payload = {
+                    studentName: studentName,
+                    lessonContext: lessonContext,
+                    lessonFileData: lessonFileData.fileData,
+                    lessonMimeType: lessonFileData.mimeType,
+                    studentWorkFileData: studentWorkFileData.fileData,
+                    studentWorkMimeType: studentWorkFileData.mimeType,
+                };
                 
                 try {
                     const response = await fetch('/api/generate_plan', {
                         method: 'POST',
                         headers: {'Content-Type': 'application/json'},
-                        body: JSON.stringify({ studentName, lessonContext, fileData, mimeType })
+                        body: JSON.stringify(payload)
                     });
                     const result = await response.json();
                     if(result.plan) {
                         outputDiv.innerHTML = result.plan.replace(/\\n/g, '<br>').replace(/\\*\\*/g, '<strong>').replace(/\\*/g, '</strong>');
                         planActions.style.display = 'flex';
                     } else {
-                        outputDiv.innerHTML = '<p class="text-red-400">Error: ' + (result.error || 'Could not generate a plan.') + '</p>';
+                        outputDiv.innerHTML = '<p class="text-red-400">Error: ' + (result.error || 'Could not generate a response.') + '</p>';
                     }
                 } catch (error) {
                     outputDiv.innerHTML = '<p class="text-red-400">An error occurred while contacting the AI assistant.</p>';
@@ -808,12 +854,9 @@ ADMIN_TEMPLATE = """
             if (fileInput.files.length > 0) {
                 const file = fileInput.files[0];
                 fileName = file.name;
-                mimeType = file.type;
-                const reader = new FileReader();
-                fileData = await new Promise((resolve) => {
-                    reader.onload = (e) => resolve(e.target.result.split(',')[1]);
-                    reader.readAsDataURL(file);
-                });
+                const fileDataObj = await getFileData(fileInput);
+                fileData = fileDataObj.fileData;
+                mimeType = fileDataObj.mimeType;
             }
 
             let userContent = userMessage;
@@ -913,14 +956,10 @@ DAY_DETAIL_TEMPLATE = """
 
 # Helper to convert HTML to clean text for exports
 def clean_html_for_export(html_content, target_format='txt'):
-    # Replace <br> tags with a unique placeholder
     text = re.sub(r'<br\s*/?>', '___NEWLINE___', html_content)
-    # Basic conversion for bold
     if target_format == 'md':
         text = re.sub(r'<strong>(.*?)</strong>', r'**\1**', text, flags=re.IGNORECASE)
-    # Strip all other HTML tags
     text = re.sub(r'<.*?>', '', text)
-    # Replace the placeholder with an actual newline character
     text = text.replace('___NEWLINE___', '\n')
     return text
 
@@ -953,7 +992,6 @@ def export_plan():
         pdf = FPDF()
         pdf.add_page()
         pdf.set_font("Arial", size=12)
-        # We need to decode the cleaned text for FPDF
         cleaned_text = clean_html_for_export(html_content, 'txt')
         cleaned_text_encoded = cleaned_text.encode('latin-1', 'replace').decode('latin-1')
         pdf.multi_cell(0, 10, txt=cleaned_text_encoded)
@@ -1016,7 +1054,6 @@ def admin_view(year, month):
     active_tab = request.args.get('tab', 'summary')
     current_date = datetime(year, month, 1)
 
-    # Month navigation logic
     prev_month_date = current_date - timedelta(days=1)
     prev_month_url = url_for('admin_view', year=prev_month_date.year, month=prev_month_date.month, tab='calendar')
     
@@ -1031,8 +1068,8 @@ def admin_view(year, month):
     
     current_user = find_user_by_email(session['user_email'])
     all_alerts = load_data(ALERTS_FILE, [])
-    open_alerts = [a for a in all_alerts if a['status'] == 'open']
-    resolved_alerts = [a for a in all_alerts if a['status'] == 'resolved']
+    open_alerts = sorted([a for a in all_alerts if a['status'] == 'open'], key=lambda x: x['date'], reverse=True)
+    resolved_alerts = sorted([a for a in all_alerts if a['status'] == 'resolved'], key=lambda x: x.get('resolved_on', ''), reverse=True)
     
     all_users = load_data(USERS_FILE, [])
     student_names = sorted(list(student_data.keys()))
@@ -1234,11 +1271,10 @@ def export_data(source, format_type):
     
     all_checkins = load_data(DATA_FILE, [])
     
-    # Filter check-ins based on the source
     if source == 'all':
         checkins_to_export = all_checkins
         filename_source = 'all_data'
-    else: # Source is a 'YYYY-MM' string
+    else: 
         checkins_to_export = [c for c in all_checkins if 'timestamp' in c and c['timestamp'].startswith(source)]
         filename_source = source.replace('-', '_')
         
@@ -1376,23 +1412,20 @@ def check_for_alerts(latest_checkin):
     )
 
     if len(student_history) < 3:
-        return # Not enough data to check for patterns
+        return 
 
     alerts = load_data(ALERTS_FILE, [])
     sent_notifications = load_data(SENT_NOTIFICATIONS_FILE, {})
     today_str = datetime.now().strftime('%Y-%m-%d')
     
-    # --- Rule 1: 3 Consecutive Days with score <= 5 ---
     last_3_days = student_history[:3]
     if len(last_3_days) == 3:
-        # Check Morale
         if all(c['morale'] <= 5 for c in last_3_days):
             alert_id = f"{student_name}-morale-3-consecutive-{today_str}"
             if not sent_notifications.get(alert_id):
                 title = f"Consecutive Low Morale Alert for {student_name}"
                 message = f"{student_name} has reported a morale score of 5 or below for 3 consecutive days."
                 alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'morale', 'status': 'open'})
-                
                 email_subject = f"Student Morale Alert: {student_name}"
                 email_body = f"""
                 <html><body>
@@ -1400,14 +1433,11 @@ def check_for_alerts(latest_checkin):
                 <p>This is an automated alert regarding student morale. <b>{student_name}</b> has reported a morale score of 5 or below for the last three consecutive check-ins.</p>
                 <p>Please make time to check in with them personally to see if there is anything we can do to help.</p>
                 <p>After you've spoken with them, you can use the AI Teaching Assistant on the dashboard to brainstorm ways to improve their morale based on your conversation.</p>
-                <p>Thank you,</p>
-                <p>The Teacher & Student AI Analysis Tool</p>
-                </body></html>
-                """
+                <p>Thank you,</p><p>The Teacher & Student AI Analysis Tool</p>
+                </body></html>"""
                 send_alert_email(email_subject, email_body)
                 sent_notifications[alert_id] = today_str
 
-        # Check Understanding
         if all(c['understanding'] <= 5 for c in last_3_days):
             alert_id = f"{student_name}-understanding-3-consecutive-{today_str}"
             if not sent_notifications.get(alert_id):
@@ -1415,7 +1445,6 @@ def check_for_alerts(latest_checkin):
                 days_str = ", ".join([datetime.fromisoformat(c['timestamp']).strftime('%b %d') for c in last_3_days])
                 message = f"{student_name} has reported an understanding score of 5 or below on {days_str}."
                 alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'understanding', 'status': 'open'})
-                
                 email_subject = f"Student Understanding Alert: {student_name}"
                 email_body = f"""
                 <html><body>
@@ -1423,28 +1452,32 @@ def check_for_alerts(latest_checkin):
                 <p>This is an automated alert regarding student understanding. <b>{student_name}</b> has reported an understanding score of 5 or below on the following recent days: {days_str}.</p>
                 <p>This may indicate a foundational gap in their learning. To get a clearer picture and an actionable plan, you can use the <b>AI Lesson Planner</b> on the dashboard.</p>
                 <p>Try submitting images of their work, code files, or documents from those days along with the lesson context. The AI can provide a proper analysis and a guide to help them get caught up to speed.</p>
-                <p>Thank you,</p>
-                <p>The Teacher & Student AI Analysis Tool</p>
-                </body></html>
-                """
+                <p>Thank you,</p><p>The Teacher & Student AI Analysis Tool</p>
+                </body></html>"""
                 send_alert_email(email_subject, email_body)
                 sent_notifications[alert_id] = today_str
 
-    # --- Rule 2: 5-Day Average score <= 5 ---
     last_5_days = student_history[:5]
     if len(last_5_days) == 5:
-        # Check Morale Average
         avg_morale = sum(c['morale'] for c in last_5_days) / 5
         if avg_morale <= 5:
             alert_id = f"{student_name}-morale-5-day-avg-{today_str}"
             if not sent_notifications.get(alert_id):
                 title = f"Low 5-Day Morale Average for {student_name}"
                 message = f"{student_name}'s average morale over the last 5 days is {avg_morale:.1f}/10."
-                # Email logic for this case is similar to the consecutive one, so we can reuse or create a new one. For now, we'll just log the alert.
                 alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'morale', 'status': 'open'})
-                sent_notifications[alert_id] = today_str # Prevent re-sending
+                email_subject = f"Student Morale Alert: {student_name}"
+                email_body = f"""
+                <html><body>
+                <p>Hi Team,</p>
+                <p>This is an automated alert regarding student morale. <b>{student_name}</b> has maintained a low morale average of {avg_morale:.1f}/10 over the last 5 days.</p>
+                <p>Please make time to check in with them personally to see if there is anything we can do to help.</p>
+                <p>After you've spoken with them, you can use the AI Teaching Assistant on the dashboard to brainstorm ways to improve their morale based on your conversation.</p>
+                <p>Thank you,</p><p>The Teacher & Student AI Analysis Tool</p>
+                </body></html>"""
+                send_alert_email(email_subject, email_body)
+                sent_notifications[alert_id] = today_str
 
-        # Check Understanding Average
         avg_understanding = sum(c['understanding'] for c in last_5_days) / 5
         if avg_understanding <= 5:
             alert_id = f"{student_name}-understanding-5-day-avg-{today_str}"
@@ -1452,7 +1485,17 @@ def check_for_alerts(latest_checkin):
                 title = f"Low 5-Day Understanding Average for {student_name}"
                 message = f"{student_name}'s average understanding over the last 5 days is {avg_understanding:.1f}/10."
                 alerts.append({'id': str(uuid.uuid4()), 'title': title, 'message': message, 'date': today_str, 'type': 'understanding', 'status': 'open'})
-                sent_notifications[alert_id] = today_str # Prevent re-sending
+                email_subject = f"Student Understanding Alert: {student_name}"
+                email_body = f"""
+                <html><body>
+                <p>Hi Team,</p>
+                <p>This is an automated alert regarding student understanding. <b>{student_name}</b> has maintained a low understanding average of {avg_understanding:.1f}/10 over the last 5 days.</p>
+                <p>This may indicate a foundational gap in their learning. To get a clearer picture and an actionable plan, you can use the <b>AI Lesson Planner</b> on the dashboard.</p>
+                <p>Try submitting images of their work, code files, or documents from those days along with the lesson context. The AI can provide a proper analysis and a guide to help them get caught up to speed.</p>
+                <p>Thank you,</p><p>The Teacher & Student AI Analysis Tool</p>
+                </body></html>"""
+                send_alert_email(email_subject, email_body)
+                sent_notifications[alert_id] = today_str
     
     save_data(ALERTS_FILE, alerts)
     save_data(SENT_NOTIFICATIONS_FILE, sent_notifications)
@@ -1486,23 +1529,22 @@ def export_alerts(format_type):
         return "No alerts to export.", 404
 
     df = pd.DataFrame(all_alerts)
-    # Reorder and rename columns for clarity
-    df = df[['date', 'title', 'message', 'status', 'resolved_on', 'resolved_by', 'resolution_comments']]
-    df.columns = ['Date Generated', 'Title', 'Details', 'Status', 'Date Resolved', 'Resolved By', 'Resolution Comments']
+    df_export = df[['date', 'title', 'message', 'status', 'resolved_on', 'resolved_by', 'resolution_comments']]
+    df_export.columns = ['Date Generated', 'Title', 'Details', 'Status', 'Date Resolved', 'Resolved By', 'Resolution Comments']
     
     output = BytesIO()
     filename = f"student_alerts_export.{format_type}"
 
     if format_type == 'xlsx':
         mimetype = 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-        df.to_excel(output, index=False, sheet_name='Alerts')
+        df_export.to_excel(output, index=False, sheet_name='Alerts')
     elif format_type == 'csv':
         mimetype = 'text/csv'
-        df.to_csv(output, index=False)
+        df_export.to_csv(output, index=False)
     elif format_type == 'ods':
         mimetype = 'application/vnd.oasis.opendocument.spreadsheet'
         with pd.ExcelWriter(output, engine='odf') as writer:
-            df.to_excel(writer, index=False, sheet_name='Alerts')
+            df_export.to_excel(writer, index=False, sheet_name='Alerts')
     else:
         return "Invalid format type", 400
         
@@ -1520,40 +1562,83 @@ def generate_guidance_plan():
     if not api_key:
         return jsonify({'error': 'API key is not configured on the server.'}), 500
 
-    data = request.json
+    data = request.get_json()
     student_name = data.get('studentName')
-    lesson_context = data.get('lessonContext')
-    file_data = data.get('fileData')
-    mime_type = data.get('mimeType')
+    lesson_context = data.get('lessonContext', '')
+    lesson_file_data = data.get('lessonFileData')
+    lesson_mime_type = data.get('lessonMimeType')
+    student_work_file_data = data.get('studentWorkFileData')
+    student_work_mime_type = data.get('studentWorkMimeType')
+    
+    prompt_parts = []
+    
+    if student_name == "Teacher":
+        prompt_parts.append("Act as an expert educational co-pilot and teaching assistant. A teacher has the following general question or request. Provide a helpful, insightful, and actionable response, formatted nicely with Markdown.")
+        prompt_parts.append(f"The teacher's request is: '{lesson_context}'")
+        if lesson_file_data:
+            prompt_parts.append("They have also provided a file for context. Please analyze it as part of your response:")
+        if student_work_file_data:
+            prompt_parts.append("A second file was also attached for additional context.")
 
-    all_checkins = load_data(DATA_FILE, [])
-    student_checkins = [c for c in all_checkins if c.get('name') == student_name]
-    recent_history = sorted(student_checkins, key=lambda x: x['timestamp'], reverse=True)[:5]
-    history_str = "\\n".join([f"- On {c['timestamp'][:10]}: Morale={c['morale']}, Understanding={c['understanding']}" for c in recent_history])
+    else:
+        # Student-specific analysis with conditional morale
+        all_checkins = load_data(DATA_FILE, [])
+        student_history = sorted([c for c in all_checkins if c.get('name') == student_name], key=lambda x: x['timestamp'], reverse=True)
+        recent_history = student_history[:5]
+        
+        # Determine if morale context is relevant
+        include_morale_context = False
+        morale_keywords = ['morale', 'feeling', 'attitude', 'frustrated', 'upset', 'well-being']
+        if any(keyword in lesson_context.lower() for keyword in morale_keywords):
+            include_morale_context = True
+        
+        if not include_morale_context and recent_history:
+            low_morale_count = sum(1 for c in recent_history if c.get('morale', 10) <= 5)
+            if low_morale_count >= 2: # Trigger if 2 or more of last 5 are low
+                include_morale_context = True
+        
+        if not include_morale_context:
+            open_alerts = [a for a in load_data(ALERTS_FILE, []) if a.get('status') == 'open']
+            if any(alert['title'].endswith(f"for {student_name}") and alert['type'] == 'morale' for alert in open_alerts):
+                include_morale_context = True
 
-    prompt_parts = [
-        f"Act as an expert educational coach and a data analyst. A student named {student_name} is struggling.",
-        f"Their 5 most recent check-ins are:\\n{history_str}",
-        f"The context for the lesson they are struggling with is: '{lesson_context}'",
-        "Based on ALL this information, please provide a concrete, actionable plan with 3-5 clear steps to help this student improve. The plan should be empathetic and encouraging.",
-        "Format the response in a structured way (e.g., using headings and bullet points)."
-    ]
-    if file_data and mime_type:
-        prompt_parts.append("Additionally, here is a file the student submitted. Please analyze it as part of your assessment:")
+        prompt_parts.append(f"Act as an expert educational coach and a data analyst. You are analyzing a student named {student_name}.")
+
+        if include_morale_context:
+            history_str = "\\n".join([f"- On {c['timestamp'][:10]}: Morale={c['morale']}, Understanding={c['understanding']}" for c in recent_history])
+            if history_str:
+                prompt_parts.append(f"Their recent check-in history is:\\n{history_str}")
+            prompt_parts.append("Note: This student's morale is a relevant factor for this analysis. Please factor their well-being into your assessment and recommendations, offering empathetic advice where appropriate.")
+        else:
+            # Morale is not a concern, focus only on understanding
+            understanding_history_str = "\\n".join([f"- On {c['timestamp'][:10]}: Understanding={c['understanding']}" for c in recent_history])
+            if understanding_history_str:
+                prompt_parts.append(f"Their recent academic understanding scores are:\\n{understanding_history_str}")
+        
+        prompt_parts.append(f"The instructor's primary request or lesson context is: '{lesson_context}'")
+
+        if lesson_file_data:
+             prompt_parts.append("The instructor has attached the lesson plan or related material for context. Please analyze it.")
+        if student_work_file_data:
+            prompt_parts.append("The instructor has also attached the student's work. Please analyze it to gauge proficiency, effort, and ambition.")
+
+        prompt_parts.append("Based on the available academic information (understanding scores, lesson context, and any attached files), provide a focused analysis of the student's proficiency and a concrete, actionable plan to maximize their learning. If morale data was included, integrate it into a holistic plan. Format the response in a structured way (e.g., using headings and bullet points).")
+
+    final_prompt = "\\n\\n".join(prompt_parts)
+    contents = [{"parts": [{"text": final_prompt}]}]
     
-    prompt = "\\n\\n".join(prompt_parts)
+    if lesson_file_data and lesson_mime_type:
+        contents[0]['parts'].append({"inline_data": {"mime_type": lesson_mime_type, "data": lesson_file_data}})
     
-    contents = [{"parts": [{"text": prompt}]}]
-    if file_data and mime_type:
-        contents[0]['parts'].append({"inline_data": {"mime_type": mime_type, "data": file_data}})
-    
+    if student_work_file_data and student_work_mime_type:
+        contents[0]['parts'].append({"inline_data": {"mime_type": student_work_mime_type, "data": student_work_file_data}})
+
     payload = {"contents": contents}
     api_url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key={api_key}"
-
     headers = {'Content-Type': 'application/json'}
 
     try:
-        response = requests.post(api_url, headers=headers, json=payload, timeout=45)
+        response = requests.post(api_url, headers=headers, json=payload, timeout=60)
         response.raise_for_status()
         result = response.json()
         
@@ -1561,6 +1646,9 @@ def generate_guidance_plan():
             plan = result['candidates'][0]['content']['parts'][0]['text']
             return jsonify({'plan': plan})
         else:
+            if result.get('candidates') and result['candidates'][0].get('finishReason') == 'SAFETY':
+                 return jsonify({'error': 'The response was blocked for safety reasons. Please adjust your prompt.'}), 500
+            print("AI Response Error. Full Response:", result)
             return jsonify({'error': 'The AI assistant returned an empty or invalid response.'}), 500
 
     except requests.exceptions.RequestException as e:
