@@ -8,13 +8,11 @@ This robust tool was built from the ground up to serve as a central hub for inst
 
 ## 📸 Application Preview
 
-*(To add your own screenshots, replace the placeholder paths below with the actual paths to your images.)*
-
 | Student Check-in View | Main Dashboard View |
 | :---: | :---: |
-| ![Student Check-in](path/to/your/screenshot_student_view.png) | ![Main Dashboard](path/to/your/screenshot_dashboard.png) |
+| ![Student Check-in](assets/1-Student%20Check-in.png) | ![Main Dashboard](assets/2-Main%20Dashboard%20View.png) |
 | **AI Lesson Planner & Sharing** | **Daily File Attachments** |
-| ![AI Lesson Planner](path/to/your/screenshot_planner.png) | ![Day Detail View](path/to/your/screenshot_day_view.png) |
+| ![AI Lesson Planner](assets/3-AI%20Lesson%20Planner.jpg) | ![Day Detail View](assets/4-Daily%20File%20Attachments.png) |
 
 
 ---
@@ -78,16 +76,22 @@ This robust tool was built from the ground up to serve as a central hub for inst
     mkdir uploads
     ```
 
-3.  **Create a `.env` File:**
+3.  **Create an `assets` Folder:**
+    In the same directory, create an `assets` folder and place your screenshots inside it.
+    ```bash
+    mkdir assets
+    ```
+
+4.  **Create a `.env` File:**
     In the same folder, create a new file named `.env`. Open it and add the following line, replacing the placeholder with your actual Gemini API key:
     ```
     GEMINI_API_KEY="YOUR_API_KEY_HERE"
     ```
 
-4.  **Create a `.gitignore` File:**
+5.  **Create a `.gitignore` File:**
     Create a file named `.gitignore` in the same folder and add the content provided in the section above. This is critical for protecting secrets and user data.
 
-5.  **Create and Activate a Virtual Environment (Recommended):**
+6.  **Create and Activate a Virtual Environment (Recommended):**
     ```bash
     # On macOS/Linux
     python3 -m venv venv
@@ -98,25 +102,25 @@ This robust tool was built from the ground up to serve as a central hub for inst
     venv\Scripts\activate
     ```
 
-6.  **Install Dependencies:**
+7.  **Install Dependencies:**
     Run the following command to install all required libraries:
     ```bash
     pip install Flask python-dotenv werkzeug pandas openpyxl odfpy fpdf2 requests
     ```
 
-7.  **Run for First-Time Setup:**
+8.  **Run for First-Time Setup:**
     The very first time you run the script, it will prompt you in the terminal to create the Super Admin account.
     ```bash
     python app.py
     ```
     After successfully creating the admin user, the script will exit.
 
-8.  **Run for Normal Use:**
+9.  **Run for Normal Use:**
     Run the script again to start the web server.
     ```bash
     python app.py
     ```
 
-9.  **Access the Application:**
+10. **Access the Application:**
     * **Student View:** `http://127.0.0.1:5000/`
     * **Staff Login:** `http://127.0.0.1:5000/login`
