@@ -1,0 +1,20 @@
+# Python virtual environment
+venv/
+*.venv/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Environment variables and secrets
+.env
+
+# User-generated data and log files
+*.json
+
+# User-uploaded content
+uploads/
+
+# IDE / Editor-specific files
+.idea/
+.vscode/
